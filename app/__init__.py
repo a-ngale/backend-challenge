@@ -1,12 +1,11 @@
 """Flask app factory."""
-
 from typing import List
 
-from flask import Flask
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, jsonify, Response, request
 
-
-db = SQLAlchemy()
+from app.database import db
+from app.exceptions import ValidationError
+from app.handlers import get_metrics_crossing
 
 
 def create_app(config_class: object):
@@ -26,7 +25,19 @@ def create_app(config_class: object):
 
     @app.route("/metrics", methods=["GET"])
     def metrics() -> List:
-        """IMPLEMENT YOUR SOLUTION HERE."""
-        return ""
+        """Returns list of dicts with artist_id and crossings of the specified value."""
+        metric_value = request.args.get('metric_value', type=int)
+        if not metric_value:
+            raise ValidationError('metric_value should be an integer')
+
+        crossing_metrics = get_metrics_crossing(metric_value)
+        return jsonify(crossing_metrics)
+
+    @app.errorhandler(ValidationError)
+    def handle_validation_error(error) -> Response:
+        """Returns a validation error response in a generic format."""
+        response = jsonify(error.to_dict())
+        response.status_code = error.status_code
+        return response
 
     return app

@@ -65,3 +65,9 @@ class TestMetrics(TestSetup):
             response.json[0]["crossings"][0],
             (datetime.date.today() - datetime.timedelta(950)).strftime("%Y-%m-%d")
         )
+
+    def test_returns_validation_error_for_invalid_metric_value(self):
+        """Test that metrics route returns Bad Request error for invalid args."""
+        response = self.app.test_client().get("/metrics?metric_value=invalid")
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.json['message'], 'metric_value should be an integer')
