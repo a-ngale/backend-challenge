@@ -27,14 +27,19 @@ def get_metrics_crossing(metric_value: int) -> List:
 
     metrics = groupby(metrics_queryset, key=lambda item: item.artist_id)
     for artist_id, artist_metrics in metrics:
-        # If artist has no metrics on previous day, treat previous day metric as 0.
-        previous_metric_value = 0
+        previous_metric = None
         crossings = []
 
         for metric in artist_metrics:
+            # TODO: Should we compare the metric with the previous date or previous
+            #  _available_ date? Is it possible to have gaps between metrics?
+            previous_metric_value = 0
+            if previous_metric and (metric.date - previous_metric.date).days == 1:
+                previous_metric_value = previous_metric.value
+
             if metric.value >= metric_value > previous_metric_value:
                 crossings.append(metric.date.strftime('%Y-%m-%d'))
-            previous_metric_value = metric.value
+            previous_metric = metric
 
         artists_crossings.append({"artist_id": artist_id, "crossings": crossings})
     return artists_crossings
